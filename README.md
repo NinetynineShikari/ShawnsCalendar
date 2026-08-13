@@ -21,7 +21,11 @@
 - 为待办设置一次性或每周重复提醒
 - 默认提前 5 分钟提醒；不足提前量时改为在事项时间提醒
 - 按自然周记录本周目标
-- 按日期记录日记
+- 在顶栏切换“日程 / 日记”两种视图
+- 按日期记录日记，并可将日记标记为重点
+- 日记视图按日期倒序收纳所有有内容的日记
+- 支持按起止日期、重点状态和正文关键词筛选日记
+- 重点日记使用黄色卡片及“重点”标识，列表和编辑器中的星标状态实时同步
 - 周目标和日记支持粗体、斜体、下划线、删除线与高亮
 - 浅色、深色和跟随系统主题
 - 自动保存、原子写入和会话备份
@@ -70,6 +74,8 @@
 ```
 
 覆盖安装或升级应用不会删除用户数据。卸载前若需要彻底保留个人数据，建议手动复制整个 `mori-schedule` 数据目录。
+
+当前数据 schema 为 **v4**。v4 新增独立的 `diary_highlighted` 日期映射，用于保存重点日记状态。旧版本数据加载时会自动迁移并补全该字段；迁移不会改写日记正文或已有的富文本 HTML。
 
 ## 旧版数据迁移
 
@@ -136,6 +142,16 @@ CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --dir --mac --arm64 --con
 npm run sign:mac:local
 ```
 
+需要注意，`npm run build` 只更新仓库中的 `dist/` 和 `dist-electron/`，不会自动替换已经安装到 `/Applications` 的应用。要让日常启动的正式应用使用最新代码，需要重新生成 `.app` 并完成覆盖安装：
+
+1. 从应用菜单或菜单栏图标中选择“退出”，确保旧版后台进程已经完全结束
+2. 执行 `npm run package:mac`，或使用上面的本机 arm64 构建命令
+3. Apple Silicon 机器使用 `release/mac-arm64/Shawn's Calendar.app`
+4. 将新 `.app` 拖入 `/Applications`，确认替换旧版本
+5. 重新启动应用，验证日程、日记、重点标记和自动保存
+
+应用程序包与用户数据相互独立。替换 `/Applications/Shawn's Calendar.app` 不会删除 `~/Library/Application Support/mori-schedule/` 中的日程和日记；升级前仍建议备份该数据目录。
+
 `sign:mac:local` 只是 ad-hoc 本地签名，适合本人机器测试，不等同于正式的 Developer ID 签名和 Apple 公证。面向其他 Mac 用户发布前，应使用 Apple Developer 证书签名、提交 notarization，并 staple 公证结果。DMG 只是安装载体，本身不能代替签名和公证。
 
 ### Windows 构建
@@ -190,6 +206,8 @@ build/                  Electron Builder 使用的应用图标
 electron/main/          主进程、数据存储与提醒调度
 electron/preload/       渲染进程可使用的受限 API
 src/components/         React 界面组件
+src/components/DiaryView.tsx
+                        日记列表、范围/重点/搜索筛选及日记详情视图
 src/lib/                日期与富文本逻辑
 src/App.tsx             应用状态及主要交互
 scheduleV_2.py          保留的旧版 Python 程序
@@ -199,7 +217,7 @@ package.json            依赖、版本、脚本和打包配置
 ## 当前发行状态与限制
 
 - 当前版本为 `3.0.0`
-- macOS arm64 版本已完成本机功能测试
+- macOS arm64 版本已完成本机功能测试，包括日程/日记切换、日记筛选、重点标记和富文本编辑
 - macOS 构建目前仅作本地 ad-hoc 签名，尚未 Developer ID 签名或公证
 - Windows 构建流程已配置，但仍需在 Windows 实机完成发行验收
 - Windows 安装包尚未代码签名
