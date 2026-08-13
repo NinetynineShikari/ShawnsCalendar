@@ -44,7 +44,6 @@
     "directories": { "output": "release", "buildResources": "build" },
     "files": ["dist/**/*", "dist-electron/**/*", "package.json"],
     "extraResources": [
-      { "from": "schedule_data.json", "to": "legacy-data/schedule_data.json" },
       { "from": "assets", "to": "assets" },
       { "from": "dist", "to": "renderer" }
     ],

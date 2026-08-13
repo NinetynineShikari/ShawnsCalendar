@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Bold, Highlighter, Italic, Redo2, Strikethrough, Underline, Undo2 } from 'lucide-react'
+import { Bold, Highlighter, Italic, Redo2, Star, Strikethrough, Underline, Undo2 } from 'lucide-react'
 
 interface Props {
   label: string
@@ -7,9 +7,11 @@ interface Props {
   html: string
   placeholder: string
   onChange: (html: string) => void
+  highlighted?: boolean
+  onToggleHighlight?: () => void
 }
 
-export function RichEditor({ label, eyebrow, html, placeholder, onChange }: Props) {
+export function RichEditor({ label, eyebrow, html, placeholder, onChange, highlighted = false, onToggleHighlight }: Props) {
   const editor = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -24,7 +26,18 @@ export function RichEditor({ label, eyebrow, html, placeholder, onChange }: Prop
 
   return <section className="editor-card">
     <header className="editor-heading">
-      <div><span className="eyebrow">{eyebrow}</span><h2>{label}</h2></div>
+      <div className="editor-title-block">
+        <span className="eyebrow">{eyebrow}</span>
+        <div className="editor-title-row">
+          <h2>{label}</h2>
+          {onToggleHighlight && <button
+            className={`diary-star-button ${highlighted ? 'active' : ''}`}
+            onClick={onToggleHighlight}
+            aria-label={highlighted ? '取消重点日记' : '标为重点日记'}
+            title={highlighted ? '取消重点日记' : '标为重点日记'}
+          ><Star /></button>}
+        </div>
+      </div>
       <div className="format-toolbar" aria-label={`${label}格式工具`}>
         <button onMouseDown={(event) => event.preventDefault()} onClick={() => command('undo')} title="撤销"><Undo2 /></button>
         <button onMouseDown={(event) => event.preventDefault()} onClick={() => command('redo')} title="重做"><Redo2 /></button>

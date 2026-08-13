@@ -5,7 +5,7 @@ import os from 'node:os'
 import { randomUUID } from 'node:crypto'
 import type { RichTag, ScheduleData, Todo } from '../../src/types'
 
-const CURRENT_SCHEMA = 3
+const CURRENT_SCHEMA = 4
 const TAGS: RichTag[] = ['b', 'i', 'u', 's', 'hl']
 
 type UnknownRecord = Record<string, unknown>
@@ -70,6 +70,10 @@ export function migrateData(raw: unknown): ScheduleData {
     goals: recordOfStrings(source.goals),
     goal_tags: { ...legacyGoalTags, ...explicitGoalTags },
     diary: recordOfStrings(source.diary),
+    diary_highlighted: Object.fromEntries(
+      Object.entries(isRecord(source.diary_highlighted) ? source.diary_highlighted : {})
+        .filter((entry): entry is [string, boolean] => entry[1] === true),
+    ),
     diary_tags: readTags(source.diary_tags),
     goal_html: recordOfStrings(source.goal_html),
     diary_html: recordOfStrings(source.diary_html),
@@ -150,8 +154,6 @@ export class DataStore {
   private async findLegacySource(): Promise<string | null> {
     const candidates = [
       path.join(os.homedir(), '.simple_schedule', 'schedule_data.json'),
-      path.join(process.cwd(), 'schedule_data.json'),
-      path.join(process.resourcesPath, 'legacy-data', 'schedule_data.json'),
     ]
     for (const candidate of candidates) {
       if (candidate !== this.dataFile && await exists(candidate)) return candidate

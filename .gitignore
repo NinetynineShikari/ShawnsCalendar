@@ -6,3 +6,7 @@ release/
 *.log
 coverage/
 *.tsbuildinfo
+
+# Personal schedule data. Runtime and legacy data must never be committed or
+# embedded in release packages.
+schedule_data.json

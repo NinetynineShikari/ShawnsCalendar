@@ -48,7 +48,7 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible { out
 
 .app-shell {
   display: grid;
-  grid-template: 74px minmax(0, 1fr) / 370px minmax(0, 1fr);
+  grid-template: 78px minmax(0, 1fr) / 370px minmax(0, 1fr);
   height: 100vh;
   background:
     radial-gradient(circle at 10% 5%, rgba(213, 229, 216, .65), transparent 28%),
@@ -64,13 +64,19 @@ button:focus-visible, input:focus-visible, [contenteditable]:focus-visible { out
   padding: 0 24px;
   -webkit-app-region: drag;
 }
-.platform-darwin .topbar { padding-left: 74px; }
+.platform-darwin .topbar { padding: 24px 18px 7px; }
 .topbar button { -webkit-app-region: no-drag; }
+.topbar-leading { min-width: 0; display: flex; align-items: center; gap: 16px; }
 .selected-date-heading { display: flex; align-items: center; gap: 11px; }
 .selected-date-heading > svg { width: 18px; color: var(--accent); }
 .selected-date-heading > div { display: flex; flex-direction: column; }
 .selected-date-heading strong { font-size: 15px; }
 .selected-date-heading span { color: var(--muted); font-size: 11px; }
+.view-switch { display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 10px; background: var(--accent-soft); -webkit-app-region: no-drag; }
+.view-switch button { display: flex; align-items: center; gap: 4px; padding: 5px 8px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 11px; cursor: pointer; }
+.view-switch button:hover { color: var(--accent); }
+.view-switch button.active { background: var(--accent); color: white; box-shadow: 0 2px 7px rgba(40, 81, 63, .16); }
+.view-switch svg { width: 13px; height: 13px; }
 .icon-button { width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0; border: 0; border-radius: 10px; background: transparent; cursor: pointer; }
 .icon-button:hover { background: var(--accent-soft); }
 .icon-button svg { width: 17px; height: 17px; }
@@ -174,6 +180,12 @@ h2 { margin: 4px 0 0; font-size: 17px; font-weight: 600; }
 .empty-state { display: grid; justify-items: center; padding: 28px; color: var(--muted); text-align: center; }.empty-state > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }.empty-state h3 { margin: 10px 0 3px; color: var(--text); font-size: 13px; }.empty-state p { margin: 0; font-size: 11px; }
 
 .editor-card { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 20px; overflow: hidden; }
+.editor-title-block { min-width: 0; }
+.editor-title-row { display: flex; align-items: center; gap: 5px; }
+.diary-star-button { width: 28px; height: 28px; display: grid; place-items: center; flex: none; margin-top: 4px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--faint); cursor: pointer; }
+.diary-star-button:hover { background: var(--card-subtle); color: #a57917; }
+.diary-star-button.active { background: #fff5d8; color: #a57917; }
+.diary-star-button svg { width: 16px; height: 16px; }
 .format-toolbar { display: flex; align-items: center; gap: 1px; opacity: .72; }.format-toolbar button { width: 27px; height: 27px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 7px; background: transparent; cursor: pointer; }.format-toolbar button:hover { background: var(--accent-soft); color: var(--accent); }.format-toolbar svg { width: 13px; }.format-toolbar i { width: 1px; height: 15px; margin: 0 3px; background: var(--line); }
 .rich-editor { min-height: 0; flex: 1; overflow-y: auto; margin-top: 15px; padding: 6px 7px; border-radius: 8px; outline: 0; background: transparent; color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 12.5px; line-height: 1.85; white-space: pre-wrap; transition: background .15s ease; }
 .rich-editor:focus, .rich-editor:focus-visible { outline: 0; background: color-mix(in srgb, var(--accent-soft), transparent 52%); box-shadow: none; }
@@ -186,7 +198,46 @@ h2 { margin: 4px 0 0; font-size: 17px; font-weight: 600; }
 .modal footer { display: flex; align-items: center; gap: 8px; margin-top: 22px; }.modal footer span { flex: 1; }.primary-button, .secondary-button, .text-button { padding: 9px 13px; border-radius: 9px; font-size: 11px; cursor: pointer; }.primary-button { border: 1px solid var(--accent); background: var(--accent); color: white; }.primary-button:disabled { opacity: .45; cursor: default; }.secondary-button { border: 1px solid var(--line); background: var(--card); }.text-button { border: 0; background: transparent; }
 .loading-screen { height: 100vh; display: grid; place-content: center; justify-items: center; gap: 10px; background: var(--bg); color: var(--muted); }.loading-screen svg { color: var(--accent); animation: pulse 1.2s infinite; }
 
+.app-shell.view-diary { grid-template-columns: 356px minmax(0, 1fr); }
+.diary-index-panel { min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 20px 14px; border-right: 1px solid var(--line); background: color-mix(in srgb, var(--panel), transparent 8%); }
+.diary-filters { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
+.date-range-filter { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 5px; }
+.date-range-filter span { color: var(--muted); font-size: 10px; }
+.date-range-filter input { min-width: 0; width: 100%; height: 31px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 8px; outline: 0; background: var(--accent-softer); color: var(--accent-strong); font-size: 10px; color-scheme: light; }
+:root[data-theme="dark"] .date-range-filter input { color-scheme: dark; }
+.important-filter { height: 31px; display: flex; align-items: center; gap: 4px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--muted); font-size: 10px; cursor: pointer; }
+.important-filter:hover, .important-filter.active { border-color: color-mix(in srgb, #b68a1e, transparent 55%); background: #fff5d8; color: #9b741b; }
+.important-filter svg { width: 13px; height: 13px; }
+.diary-search { grid-column: 1 / -1; height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 10px; border: 1px solid transparent; border-radius: 9px; background: var(--accent-soft); color: var(--muted); }
+.diary-search:focus-within { border-color: color-mix(in srgb, var(--accent), transparent 55%); }
+.diary-search svg { width: 14px; height: 14px; flex: none; }
+.diary-search input { min-width: 0; flex: 1; padding: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 11px; }
+.diary-search input::placeholder { color: var(--faint); }
+.diary-list { min-height: 0; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; margin-top: 13px; padding: 1px 3px 1px 1px; scrollbar-color: color-mix(in srgb, var(--accent), transparent 55%) transparent; scrollbar-width: thin; }
+.diary-list-item { width: 100%; display: flex; flex-direction: column; gap: 8px; flex: none; padding: 13px 14px; border: 1px solid var(--line); border-radius: 13px; background: var(--card); color: var(--text); text-align: left; cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+.diary-list-item:hover { border-color: color-mix(in srgb, var(--accent), transparent 62%); transform: translateY(-1px); }
+.diary-list-item.selected { border-color: color-mix(in srgb, var(--accent), transparent 35%); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent), transparent 82%); }
+.diary-list-item.highlighted { border-color: color-mix(in srgb, #c39b36, transparent 62%); background: color-mix(in srgb, var(--highlight), var(--card) 20%); }
+.diary-list-title { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.diary-list-title strong { overflow: hidden; font-size: 11.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.diary-list-title em { display: flex; align-items: center; gap: 3px; flex: none; color: #a27a1d; font-size: 9px; font-style: normal; }
+.diary-list-title em svg { width: 10px; height: 10px; }
+.diary-list-preview { overflow: hidden; color: var(--muted); font-size: 10px; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
+.diary-list-empty { display: grid; place-items: center; gap: 8px; padding: 42px 12px; color: var(--faint); text-align: center; }
+.diary-list-empty svg { width: 20px; }
+.diary-list-empty p { margin: 0; font-size: 11px; }
+.diary-detail-panel { min-width: 0; min-height: 0; padding: 20px 24px; overflow: hidden; }
+.diary-detail-panel .editor-card { height: 100%; }
+.diary-detail-panel .rich-editor { margin-top: 14px; padding: 18px 20px; background: color-mix(in srgb, var(--accent-softer), transparent 12%); font-size: 13px; line-height: 1.9; }
+.diary-detail-panel .rich-editor:focus { background: color-mix(in srgb, var(--accent-soft), transparent 35%); }
+.diary-detail-empty { height: 100%; display: grid; place-content: center; justify-items: center; padding: 30px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); color: var(--muted); text-align: center; box-shadow: var(--shadow); }
+.diary-detail-empty > svg { width: 27px; height: 27px; color: var(--accent); }
+.diary-detail-empty h2 { margin-top: 12px; }
+.diary-detail-empty p { margin: 7px 0 0; font-size: 11px; }
+
 @media (max-width: 1120px) {
   .app-shell { grid-template-columns: 340px minmax(0, 1fr); }
+  .app-shell.view-diary { grid-template-columns: 330px minmax(0, 1fr); }
   .workspace { padding: 18px; gap: 14px; }
+  .diary-detail-panel { padding: 18px; }
 }

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { CalendarDays, CloudOff, Leaf, Moon, Sun } from 'lucide-react'
+import { BookOpen, CalendarDays, CloudOff, Leaf, ListTodo, Moon, Sun } from 'lucide-react'
 import { Calendar } from './components/Calendar'
+import { DiaryView } from './components/DiaryView'
 import { RichEditor } from './components/RichEditor'
 import { ReminderDialog } from './components/ReminderDialog'
 import { TodoList, type VisibleTodo } from './components/TodoList'
@@ -12,6 +13,7 @@ import type { ScheduleData, Todo } from './types'
 import './styles.css'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+type AppView = 'schedule' | 'diary'
 
 const newTodo = (task: string): Todo => ({
   uid: crypto.randomUUID(),
@@ -29,6 +31,12 @@ function App() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [reminderTarget, setReminderTarget] = useState<VisibleTodo | null>(null)
+  const [view, setView] = useState<AppView>('schedule')
+  const [diarySelectedKey, setDiarySelectedKey] = useState<string | null>(null)
+  const [diaryRangeStart, setDiaryRangeStart] = useState('')
+  const [diaryRangeEnd, setDiaryRangeEnd] = useState('')
+  const [diaryImportantOnly, setDiaryImportantOnly] = useState(false)
+  const [diaryQuery, setDiaryQuery] = useState('')
   const firstLoad = useRef(true)
   const saveSequence = useRef(0)
 
@@ -104,6 +112,11 @@ function App() {
     })
   }, [])
 
+  const resolveDiaryHtml = useCallback((key: string) => {
+    if (!data) return ''
+    return data.diary_html[key] ?? legacyRichTextToHtml(data.diary[key] ?? '', data.diary_tags[key])
+  }, [data])
+
   const addTodo = () => {
     const todo = newTodo('')
     mutate((draft) => {
@@ -163,11 +176,32 @@ function App() {
     }
   })
 
-  return <div className={`app-shell platform-${window.scheduleAPI.platform}`}>
+  const toggleDiaryHighlight = (key: string) => mutate((draft) => {
+    if (draft.diary_highlighted[key]) delete draft.diary_highlighted[key]
+    else draft.diary_highlighted[key] = true
+  })
+
+  const openDiaryView = () => {
+    const currentHasDiary = Boolean(data.diary[selectedKey]?.trim())
+    const newestDiary = Object.entries(data.diary)
+      .filter(([, text]) => text.trim())
+      .map(([key]) => key)
+      .sort((a, b) => b.localeCompare(a))[0]
+    setDiarySelectedKey(currentHasDiary ? selectedKey : newestDiary ?? null)
+    setView('diary')
+  }
+
+  return <div className={`app-shell view-${view} platform-${window.scheduleAPI.platform}`}>
     <header className="topbar">
-      <div className="selected-date-heading">
-        <CalendarDays />
-        <div><strong>{format(selectedDate, 'M月d日 EEEE', { locale: zhCN })}</strong><span>{format(selectedDate, 'yyyy')}</span></div>
+      <div className="topbar-leading">
+        <div className="selected-date-heading">
+          <CalendarDays />
+          <div><strong>{format(selectedDate, 'M月d日 EEEE', { locale: zhCN })}</strong><span>{format(selectedDate, 'yyyy')}</span></div>
+        </div>
+        <div className="view-switch" role="group" aria-label="切换日程与日记视图">
+          <button className={view === 'schedule' ? 'active' : ''} onClick={() => setView('schedule')} aria-pressed={view === 'schedule'}><ListTodo />日程</button>
+          <button className={view === 'diary' ? 'active' : ''} onClick={openDiaryView} aria-pressed={view === 'diary'}><BookOpen />日记</button>
+        </div>
       </div>
       <div className={`save-indicator ${saveStatus}`}>
         {saveStatus === 'error' ? <CloudOff /> : <i />}
@@ -180,17 +214,48 @@ function App() {
       >{currentTheme === 'dark' ? <Sun /> : <Moon />}</button>
     </header>
 
-    <aside className="calendar-panel">
-      <Calendar month={visibleMonth} selected={selectedDate} datesWithTodos={datesWithTodos} onMonthChange={setVisibleMonth} onSelect={(date) => { setSelectedDate(date); setVisibleMonth(date) }} />
-      <div className="sidebar-goal">
-        <RichEditor key={`goal-${selectedWeek}`} eyebrow="WEEKLY INTENTION" label="本周总体目标" html={goalHtml} placeholder="这一周，什么事情最值得完成？" onChange={(html) => updateRichText('goal', selectedWeek, html)} />
-      </div>
-    </aside>
+    {view === 'schedule' ? <>
+      <aside className="calendar-panel">
+        <Calendar month={visibleMonth} selected={selectedDate} datesWithTodos={datesWithTodos} onMonthChange={setVisibleMonth} onSelect={(date) => { setSelectedDate(date); setVisibleMonth(date) }} />
+        <div className="sidebar-goal">
+          <RichEditor key={`goal-${selectedWeek}`} eyebrow="WEEKLY INTENTION" label="本周总体目标" html={goalHtml} placeholder="这一周，什么事情最值得完成？" onChange={(html) => updateRichText('goal', selectedWeek, html)} />
+        </div>
+      </aside>
 
-    <main className="workspace">
-      <TodoList items={visibleTodos} onAdd={addTodo} onUpdate={updateTodo} onDelete={confirmDeleteTodo} onReminder={setReminderTarget} onReorder={reorderTodos} />
-      <RichEditor key={`diary-${selectedKey}`} eyebrow="DAILY NOTE" label="今日日记" html={diaryHtml} placeholder="记下今天发生的事，或此刻的想法…" onChange={(html) => updateRichText('diary', selectedKey, html)} />
-    </main>
+      <main className="workspace">
+        <TodoList items={visibleTodos} onAdd={addTodo} onUpdate={updateTodo} onDelete={confirmDeleteTodo} onReminder={setReminderTarget} onReorder={reorderTodos} />
+        <RichEditor
+          key={`diary-${selectedKey}`}
+          eyebrow="DAILY NOTE"
+          label="今日日记"
+          html={diaryHtml}
+          placeholder="记下今天发生的事，或此刻的想法…"
+          highlighted={data.diary_highlighted[selectedKey] === true}
+          onToggleHighlight={() => toggleDiaryHighlight(selectedKey)}
+          onChange={(html) => updateRichText('diary', selectedKey, html)}
+        />
+      </main>
+    </> : <DiaryView
+      data={data}
+      selectedKey={diarySelectedKey}
+      rangeStart={diaryRangeStart}
+      rangeEnd={diaryRangeEnd}
+      importantOnly={diaryImportantOnly}
+      query={diaryQuery}
+      onSelect={(key) => {
+        const date = parseDateKey(key)
+        setDiarySelectedKey(key)
+        setSelectedDate(date)
+        setVisibleMonth(date)
+      }}
+      onRangeStartChange={setDiaryRangeStart}
+      onRangeEndChange={setDiaryRangeEnd}
+      onImportantOnlyChange={setDiaryImportantOnly}
+      onQueryChange={setDiaryQuery}
+      onChange={(key, html) => updateRichText('diary', key, html)}
+      onToggleHighlight={toggleDiaryHighlight}
+      resolveHtml={resolveDiaryHtml}
+    />}
 
     {reminderTarget && <ReminderDialog
       todo={reminderTarget.todo}

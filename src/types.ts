@@ -15,6 +15,7 @@ export interface ScheduleData {
   goals: Record<string, string>
   goal_tags: Record<string, Partial<Record<RichTag, [string, string][]>>>
   diary: Record<string, string>
+  diary_highlighted: Record<string, boolean>
   diary_tags: Record<string, Partial<Record<RichTag, [string, string][]>>>
   goal_html: Record<string, string>
   diary_html: Record<string, string>

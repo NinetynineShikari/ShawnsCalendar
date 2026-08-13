@@ -73,18 +73,17 @@
 
 ## 旧版数据迁移
 
-仓库中的以下文件是历史版本及其示例数据，需继续保留：
+仓库中保留 `scheduleV_2.py` 作为原 Tkinter 版本。旧程序在用户目录中生成的 `schedule_data.json` 属于个人数据，不会提交到 Git，也不会打入任何安装包。
 
-- `scheduleV_2.py`：原 Tkinter 版本
-- `schedule_data.json`：旧版数据文件，也是打包时的迁移来源
+首次启动且新数据目录中没有数据时，应用会查找旧版的 `~/.simple_schedule/schedule_data.json`。在 Windows 上，它对应：
 
-首次启动且新数据目录中没有 `schedule_data.json` 时，应用会依次查找：
-
-1. `~/.simple_schedule/schedule_data.json`
-2. 当前工作目录中的 `schedule_data.json`
-3. 安装包内置的 `legacy-data/schedule_data.json`
+```text
+C:\Users\<用户名>\.simple_schedule\schedule_data.json
+```
 
 找到数据后会先备份原文件，再迁移到当前 schema。应用不会覆盖旧版原始文件。
+
+自动迁移只在新版数据文件尚不存在时执行。给旧版用户安装之前，应保留 `.simple_schedule` 中的原文件并额外制作一份备份。如果新版已经启动并创建了空数据文件，需要先备份并移走新版数据文件，再重新启动以触发自动迁移。
 
 ## 技术架构
 
@@ -194,7 +193,6 @@ src/components/         React 界面组件
 src/lib/                日期与富文本逻辑
 src/App.tsx             应用状态及主要交互
 scheduleV_2.py          保留的旧版 Python 程序
-schedule_data.json      旧版数据及首次迁移来源
 package.json            依赖、版本、脚本和打包配置
 ```
 

@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { migrateData } from './storage'
 
 describe('legacy data migration', () => {
@@ -37,16 +35,50 @@ describe('legacy data migration', () => {
     expect(data.diary['2025-03-25']).toBe('日记')
     expect(data.goal_tags['2025-03-24'].b).toEqual([['1.0', '1.2']])
     expect(data.diary_tags['2025-03-25'].i).toEqual([['1.0', '1.2']])
+    expect(data.diary_highlighted).toEqual({})
   })
 
-  it('migrates the complete real-world legacy file without dropping records', () => {
-    const legacy = JSON.parse(readFileSync(resolve('schedule_data.json'), 'utf8'))
+  it('preserves highlighted diaries while normalizing false entries', () => {
+    const data = migrateData({
+      diary: { '2025-03-25': '重点日记', '2025-03-26': '普通日记' },
+      diary_highlighted: { '2025-03-25': true, '2025-03-26': false },
+    })
+    expect(data.diary_highlighted).toEqual({ '2025-03-25': true })
+    expect(data.schema_version).toBe(4)
+  })
+
+  it('migrates representative v2 data without dropping records', () => {
+    const legacy = {
+      schema_version: 2,
+      todos: {
+        '2025-03-25': [
+          {
+            uid: 'legacy-1',
+            task: '带提醒的旧待办',
+            done: false,
+            highlighted: true,
+            reminder_time: '2025-03-25 09:30',
+            repeat_weekly: true,
+          },
+        ],
+        '2025-03-26': [{ task: '普通旧待办', done: true }],
+      },
+      goals: { '2025-03-24': '本周目标' },
+      goal_tags: { '2025-03-24': { b: [['1.0', '1.2']] } },
+      diary: { '2025-03-25': '旧日日记' },
+      diary_tags: { '2025-03-25': { hl: [['1.0', '1.2']] } },
+    }
     const migrated = migrateData(legacy)
-    expect(Object.keys(migrated.todos)).toHaveLength(72)
-    expect(Object.values(migrated.todos).flat()).toHaveLength(207)
-    expect(Object.keys(migrated.goals)).toHaveLength(21)
-    expect(Object.keys(migrated.diary)).toHaveLength(21)
-    expect(Object.values(migrated.todos).flat().filter((todo) => todo.highlighted)).toHaveLength(4)
+    expect(Object.keys(migrated.todos)).toHaveLength(2)
+    expect(Object.values(migrated.todos).flat()).toHaveLength(2)
+    expect(migrated.goals['2025-03-24']).toBe('本周目标')
+    expect(migrated.diary['2025-03-25']).toBe('旧日日记')
+    expect(migrated.todos['2025-03-25'][0]).toMatchObject({
+      task: '带提醒的旧待办',
+      highlighted: true,
+      reminder_time: '2025-03-25 09:30',
+      repeat_weekly: true,
+    })
     expect(Object.values(migrated.todos).flat().every((todo) => todo.uid)).toBe(true)
   })
 })
