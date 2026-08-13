@@ -1,0 +1,76 @@
+{
+  "name": "mori-schedule",
+  "version": "3.0.0",
+  "private": true,
+  "author": "Shawn Wang",
+  "description": "A calm, local-first schedule, weekly goals and journal desktop app.",
+  "main": "dist-electron/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "package": "npm run build && electron-builder",
+    "package:mac": "npm run build && electron-builder --mac",
+    "sign:mac:local": "codesign --force --deep --sign - \"release/mac-arm64/Shawn's Calendar.app\" && codesign --verify --deep --strict \"release/mac-arm64/Shawn's Calendar.app\"",
+    "package:win": "npm run build && electron-builder --win"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "date-fns": "latest",
+    "electron-store": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest",
+    "vite-plugin-electron": "latest",
+    "vite-plugin-electron-renderer": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "electron": "^43.4.0",
+    "electron-builder": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  },
+  "build": {
+    "appId": "com.shawn.mori-schedule",
+    "productName": "Shawn's Calendar",
+    "asar": true,
+    "directories": { "output": "release", "buildResources": "build" },
+    "files": ["dist/**/*", "dist-electron/**/*", "package.json"],
+    "extraResources": [
+      { "from": "schedule_data.json", "to": "legacy-data/schedule_data.json" },
+      { "from": "assets", "to": "assets" },
+      { "from": "dist", "to": "renderer" }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
+      "extendInfo": {
+        "NSUserNotificationAlertStyle": "alert"
+      },
+      "target": [
+        { "target": "dmg", "arch": ["arm64", "x64"] },
+        { "target": "zip", "arch": ["arm64", "x64"] }
+      ]
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64", "arm64"] },
+        { "target": "portable", "arch": ["x64", "arm64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
